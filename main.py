@@ -2,7 +2,7 @@ import sys
 from PySide6.QtWidgets import QApplication
 
 from ui_main import YtDownloaderUI
-from yt_core import DownloadWorker, is_valid_time_format
+from yt_worker import DownloadWorker
 
 
 class AppController:
@@ -14,8 +14,6 @@ class AppController:
     def __init__(self):
         self.ui = YtDownloaderUI()
         self.worker = None
-
-        # UI 위젯의 이벤트(Signal) 연결
         self.ui.start_btn.clicked.connect(self.on_start_download)
 
     def show(self):
@@ -30,20 +28,13 @@ class AppController:
             self.ui.append_log("[경고] 다운로드할 URL을 먼저 입력해주세요.")
             return
 
-        current_tab = self.ui.get_current_tab_index()
+        download_option_type = self.ui.get_current_download_option_type()
         save_dir = self.ui.get_save_dir()
         time_start, time_end = None, None
 
-        # 2. 탭 3 (구간 다운로드)일 때 데이터 유효성 검증
-        if current_tab == 2:
+        # 2. 탭 3 (구간 다운로드)일 때 시작, 종료 시간 수집
+        if download_option_type == 2:
             time_start, time_end = self.ui.get_time_inputs()
-
-            if time_start and not is_valid_time_format(time_start):
-                self.ui.append_log("[오류] 시작 시간 형식이 올바르지 않습니다.")
-                return
-            if time_end and not is_valid_time_format(time_end):
-                self.ui.append_log("[오류] 종료 시간 형식이 올바르지 않습니다.")
-                return
 
         # 3. 로직 실행 전 View 상태 변경
         self.ui.set_downloading_state(True)
@@ -52,7 +43,7 @@ class AppController:
 
         # 4. 백그라운드 Worker 스레드(로직) 생성 및 실행
         self.worker = DownloadWorker(
-            urls, current_tab, save_dir, time_start, time_end)
+            urls, download_option_type, save_dir, time_start, time_end)
 
         # Worker의 시그널을 View의 렌더링 메서드에 연결
         self.worker.log_signal.connect(self.ui.append_log)
