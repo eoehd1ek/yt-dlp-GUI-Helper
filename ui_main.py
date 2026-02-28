@@ -1,4 +1,6 @@
 import os
+import subprocess
+import platform
 import webbrowser
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QLabel, QTextEdit, QLineEdit, QPushButton,
@@ -110,8 +112,13 @@ class YtDownloaderUI(QMainWindow):
         self.path_input.setText(os.getcwd())
         self.path_btn = QPushButton("폴더 선택")
         self.path_btn.clicked.connect(self.select_download_path)
+
+        self.open_path_btn = QPushButton("폴더 열기")
+        self.open_path_btn.clicked.connect(self.open_download_path)
+
         path_layout.addWidget(self.path_input)
         path_layout.addWidget(self.path_btn)
+        path_layout.addWidget(self.open_path_btn)
         main_layout.addLayout(path_layout)
 
         # 3. 탭 위젯 설정
@@ -196,6 +203,24 @@ class YtDownloaderUI(QMainWindow):
             self, "저장 폴더 선택", self.path_input.text())
         if directory:
             self.path_input.setText(directory)
+
+    def open_download_path(self):
+        """설정된 저장 위치를 엽니다 (Windows: 탐색기, Mac: 파인더)"""
+        path = self.path_input.text()
+        if not os.path.exists(path):
+            self.append_log(f"[경고] 존재하지 않는 경로입니다: {path}")
+            return
+
+        try:
+            current_os = platform.system()
+            if current_os == 'Windows':
+                os.startfile(path)
+            elif current_os == 'Darwin':  # macOS
+                subprocess.Popen(['open', path])
+            else:  # Linux (기본 폴더 열기)
+                subprocess.Popen(['xdg-open', path])
+        except Exception as e:
+            self.append_log(f"[오류] 폴더 열기를 실패했습니다: {e}")
 
     def open_clean_url_dialog(self):
         """도구: 파라미터 제거 팝업 띄우기"""
