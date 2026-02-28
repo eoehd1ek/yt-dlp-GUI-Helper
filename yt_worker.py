@@ -21,6 +21,7 @@ class DownloadWorker(QThread):
         self.time_start = time_start
         self.time_end = time_end
         self.is_running = True
+        self.process = None
 
     def run(self) -> None:
         if (self.download_option_type == 2):
@@ -56,7 +57,7 @@ class DownloadWorker(QThread):
             env["PYTHONUTF8"] = "1"
 
             # 프로세스 실행 및 실시간 출력 캡처
-            process = subprocess.Popen(
+            self.process = subprocess.Popen(
                 cmd_str, shell=True,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 text=True,
@@ -66,17 +67,30 @@ class DownloadWorker(QThread):
             )
 
             while True:
-                line = process.stdout.readline()
-                if not line and process.poll() is not None:
+                if not self.is_running:
+                    if self.process:
+                        self.process.terminate()
+                        self.process.wait()
+                    break
+
+                line = self.process.stdout.readline()
+                if not line and self.process.poll() is not None:
                     break
                 if line:
                     self.log_signal.emit(line.strip())
 
         if self.is_running:
             self.log_signal.emit("=== 모든 다운로드 작업이 완료되었습니다 ===")
+        else:
+            self.log_signal.emit("=== 다운로드 작업이 강제 취소되었습니다 ===")
 
         self.finished_signal.emit()
 
     def stop(self) -> None:
         """작업을 안전하게 중단하기 위한 플래그 스위치"""
         self.is_running = False
+        if self.process:
+            try:
+                self.process.terminate()
+            except Exception:
+                pass

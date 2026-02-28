@@ -1,3 +1,4 @@
+import sys
 import os
 import subprocess
 import platform
@@ -6,6 +7,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QLabel, QTextEdit, QLineEdit, QPushButton,
                                QTabWidget, QFileDialog, QDialog)
 from PySide6.QtGui import QAction
+from PySide6.QtCore import Signal
 
 from yt_core import is_valid_time_format, clean_urls
 
@@ -62,6 +64,7 @@ class YtDownloaderUI(QMainWindow):
     GUI 컴포넌트의 구성과 레이아웃 설정만을 담당하는 뷰(View) 클래스
     내부 로직은 포함하지 않으며 시그널 연결은 컨트롤러(main.py)에서 수행합니다.
     """
+    window_closed = Signal()
 
     def __init__(self):
         super().__init__()
@@ -139,6 +142,14 @@ class YtDownloaderUI(QMainWindow):
         self.log_view.setStyleSheet(
             "background-color: black; color: white; font-family: Consolas;")
         main_layout.addWidget(self.log_view)
+
+    def closeEvent(self, event):
+        """
+        메인 윈도우가 닫힐 때 발생하는 이벤트입니다.
+        컨트롤러에 이를 알려주어 진행중인 워커가 있다면 정리할 수 있게 합니다.
+        """
+        self.window_closed.emit()
+        super().closeEvent(event)
 
     def _setup_tabs(self):
         """각 탭의 UI 레이아웃을 구성합니다"""

@@ -14,7 +14,10 @@ class AppController:
     def __init__(self):
         self.ui = YtDownloaderUI()
         self.worker = None
+
+        # UI 위젯의 이벤트(Signal) 연결
         self.ui.start_btn.clicked.connect(self.on_start_download)
+        self.ui.window_closed.connect(self.on_window_closed)
 
     def show(self):
         """메인 윈도우를 화면에 띄웁니다."""
@@ -55,6 +58,12 @@ class AppController:
         """Worker 스레드가 완료되었을 때 호출되는 콜백"""
         self.ui.set_downloading_state(False)
         self.ui.append_log("--- 작업 스레드가 안전하게 종료되었습니다 ---")
+
+    def on_window_closed(self):
+        """윈도우 창이 닫힐 때 자원을 정리하기 위한 콜백"""
+        if self.worker and self.worker.isRunning():
+            self.worker.stop()
+            self.worker.wait()  # 스레드가 완전히 종료될 때까지 대기
 
 
 def main():
