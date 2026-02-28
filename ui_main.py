@@ -68,7 +68,7 @@ class YtDownloaderUI(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("yt-dlp GUI 매니저")
+        self.setWindowTitle("yt-dlp GUI Helper")
         self.resize(750, 700)
 
         self._init_menu()
