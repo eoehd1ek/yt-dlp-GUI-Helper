@@ -6,13 +6,12 @@ build/
 *.mp4
 *.webm
 
-# 예전 버전 exe 파일들
+# 빌드 파일
 youtube-dl_oldVersion/
-Youtube-dl_GUI_Helper_*.exe
+**.exe
 
 # python 테스트 코드
 **/test.py
-
 
 # pyinstaller 관련 파일들
 *.spec
